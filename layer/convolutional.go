@@ -6,7 +6,7 @@ type ConvLayer struct {
 	Stride     int
 }
 
-func NewConvLayer(inputSize, numNeurons, kernelSize, stride int, activation ActivationFunction) *ConvLayer {
+func Conv(inputSize, numNeurons, kernelSize, stride int, activation ActivationFunction) *ConvLayer {
 	layer := NewLayer(inputSize, numNeurons, activation)
 
 	return &ConvLayer{
