@@ -2,7 +2,7 @@ package loss
 
 import "math"
 
-func MeanSquareError(yTrue, yPred []float64) float64 {
+func MeanSquaredError(yTrue, yPred []float64) float64 {
 	if len(yTrue) != len(yPred) {
 		panic("Input arrays must have the same length")
 	}
