@@ -1,0 +1,268 @@
+package activation
+
+func ReLU(x float64) float64 {
+	if x < 0 {
+		return 0
+	}
+	return x
+}
+
+func ArrRelu(input []float64) []float64 {
+	output := make([]float64, len(input))
+	for i, val := range input {
+		output[i] = ReLU(val)
+	}
+	return output
+}
+
+import (
+	"math"
+)
+
+// vanishing gradient problem?
+
+func Sigmoid(X float64) float64 {
+	return 1 / (1 + math.Exp(-X))
+}
+
+
+package layer
+
+type ConvLayer struct {
+	*Layer
+	KernelSize int
+	Stride     int
+}
+
+func Conv(inputSize, numNeurons, kernelSize, stride int, activation ActivationFunction) *ConvLayer {
+	layer := NewLayer(inputSize, numNeurons, activation)
+
+	return &ConvLayer{
+		Layer:      layer,
+		KernelSize: kernelSize,
+		Stride:     stride,
+	}
+}
+
+
+type DenseLayer struct {
+	*Layer
+}
+
+func Dense(inputSize, numNeurons int, activation ActivationFunction) *DenseLayer {
+	layer := NewLayer(inputSize, numNeurons, activation)
+
+	return &DenseLayer{
+		Layer: layer,
+	}
+}
+
+
+import (
+	"math/rand"
+)
+
+type ActivationFunction func(float64) float64
+
+// Layer is a base type that defines common properties of all layer types
+type Layer struct {
+	InputSize  int
+	NumNeurons int
+	Weights    [][]float64
+	Biases     []float64
+	Activation ActivationFunction
+}
+
+// NewLayer is a generic function for creating layers
+func NewLayer(inputSize, numNeurons int, activation ActivationFunction) *Layer {
+	// Initialize layer with weights and biases
+	weights := make([][]float64, numNeurons)
+	for i := range weights {
+		weights[i] = make([]float64, inputSize)
+		for j := range weights[i] {
+			// Initialize with random values
+			weights[i][j] = rand.Float64()
+		}
+	}
+
+	biases := make([]float64, numNeurons)
+	for i := range biases {
+		biases[i] = rand.Float64()
+	}
+
+	return &Layer{
+		InputSize:  inputSize,
+		NumNeurons: numNeurons,
+		Weights:    weights,
+		Biases:     biases,
+		Activation: activation,
+	}
+}
+
+func (l *Layer) Forward(input []float64) []float64 {
+	// Forward pass
+	output := make([]float64, l.NumNeurons)
+
+	for i := 0; i < l.NumNeurons; i++ {
+		z := l.Biases[i]
+		for j := 0; j < l.InputSize; j++ {
+			z += l.Weights[i][j] * input[j]
+		}
+		output[i] = l.Activation(z)
+	}
+	return output
+}
+
+
+type RecurrentLayer struct {
+	*Layer
+	TimeSteps int
+}
+
+func Rec(inputSize, numNeurons, timeSteps int, activation ActivationFunction) *RecurrentLayer {
+	layer := NewLayer(inputSize, numNeurons, activation)
+
+	return &RecurrentLayer{
+		Layer:     layer,
+		TimeSteps: timeSteps,
+	}
+}
+
+
+package loss
+
+import "math"
+
+// classification tasks
+// dif between predicted class probibilities and true class values
+
+func CrossEntropy(yTrue, yPred []float64) float64 {
+	if len(yTrue) != len(yPred) {
+		panic("Error: Input arrays must have same length")
+	}
+
+	loss := 0.0
+	for i := 0; i < len(yTrue); i++ {
+		loss += -yTrue[i]*math.Log(yPred[i]) - (1-yTrue[i])*math.Log(1-yPred[i])
+	}
+
+	loss /= float64(len(yTrue))
+
+	return loss
+}
+
+
+import "math"
+
+func MeanSquaredError(yTrue, yPred []float64) float64 {
+	if len(yTrue) != len(yPred) {
+		panic("Input arrays must have the same length")
+	}
+
+	sumSqError := 0.0
+
+	for i := 0; i < len(yTrue); i++ {
+		sqError := math.Pow(yTrue[i]-yPred[i], 2)
+		sumSqError += sqError
+	}
+
+	mse := sumSqError / float64(len(yTrue))
+	return mse
+}
+
+
+package optimizer
+
+import "math"
+
+type AdamOptimizer struct {
+	LearningRate float64
+	Beta1        float64
+	Beta2        float64
+	Epsilon      float64
+	M            [][]float64 // mean for weights
+	V            [][]float64 // variance for weights
+	MBias        []float64   // mean for biases
+	VBias        []float64   // variance for biases
+	T            int         // Time step
+}
+
+func Adam(learningRate, beta1, beta2, epsilon float64, weightShape [][]float64, biasShape []int) *AdamOptimizer {
+	// Initialize the optimizer for weights
+	m := make([][]float64, len(weightShape))
+	v := make([][]float64, len(weightShape))
+	for i := range weightShape {
+		m[i] = make([]float64, len(weightShape[i]))
+		v[i] = make([]float64, len(weightShape[i]))
+	}
+
+	// Initialize the optimizer for biases
+	mBias := make([]float64, len(biasShape))
+	vBias := make([]float64, len(biasShape))
+
+	return &AdamOptimizer{
+		LearningRate: learningRate,
+		Beta1:        beta1,
+		Beta2:        beta2,
+		Epsilon:      epsilon,
+		M:            m,
+		V:            v,
+		MBias:        mBias,
+		VBias:        vBias,
+		T:            0,
+	}
+}
+
+func (adam *AdamOptimizer) Update(weights, gradients [][]float64, biases, biasGradients []float64) {
+	// Increment the time step
+	adam.T++
+
+	// Update weights
+	for i := range weights {
+		for j := range weights[i] {
+			adam.M[i][j] = adam.Beta1*adam.M[i][j] + (1.0-adam.Beta1)*gradients[i][j]
+			adam.V[i][j] = adam.Beta2*adam.V[i][j] + (1.0-adam.Beta2)*gradients[i][j]*gradients[i][j]
+
+			mHat := adam.M[i][j] / (1.0 - math.Pow(adam.Beta1, float64(adam.T)))
+			vHat := adam.V[i][j] / (1.0 - math.Pow(adam.Beta2, float64(adam.T)))
+
+			weights[i][j] -= adam.LearningRate * mHat / (math.Sqrt(vHat) + adam.Epsilon)
+		}
+	}
+
+	// Update biases
+	for i := range biases {
+		adam.MBias[i] = adam.Beta1*adam.MBias[i] + (1.0-adam.Beta1)*biasGradients[i]
+		adam.VBias[i] = adam.Beta2*adam.VBias[i] + (1.0-adam.Beta2)*biasGradients[i]*biasGradients[i]
+
+		mHat := adam.MBias[i] / (1.0 - math.Pow(adam.Beta1, float64(adam.T)))
+		vHat := adam.VBias[i] / (1.0 - math.Pow(adam.Beta2, float64(adam.T)))
+
+		biases[i] -= adam.LearningRate * mHat / (math.Sqrt(vHat) + adam.Epsilon)
+	}
+}
+
+
+type SGDOptimizer struct {
+	LearningRate float64
+}
+
+func SGD(learningRate float64) *SGDOptimizer {
+	return &SGDOptimizer{
+		LearningRate: learningRate,
+	}
+}
+
+func (sgd *SGDOptimizer) Update(weights, gradients [][]float64, biases, biasGradients []float64) {
+	// Update weights
+	for i := range weights {
+		for j := range weights[i] {
+			weights[i][j] -= sgd.LearningRate * gradients[i][j]
+		}
+	}
+
+	// Update biases
+	for i := range biases {
+		biases[i] -= sgd.LearningRate * biasGradients[i]
+	}
+}
