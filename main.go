@@ -9,19 +9,26 @@ import (
 )
 
 func main() {
-	input := []float64{0.1, 0.2, 0.3}
+    // Define the architecture of your neural network
+    inputLayer := layer.Dense(inputSize, numNeurons, activation.ReLU)
+    hiddenLayer := layer.Dense(numNeurons, hiddenLayerNeurons, activation.Sigmoid)
+    outputLayer := layer.Dense(hiddenLayerNeurons, outputNeurons, activation.Sigmoid)
 
-	// dense layer with 4 neurons and ReLU activation function
-	denseLayer := layer.Dense(len(input), 4, activation.ReLU)
+    // Initialize an optimizer
+    adam := optimizer.Adam(learningRate, beta1, beta2, epsilon, weightShape, biasShape)
 
-	// forward pass
-	output := denseLayer.Forward(input)
+    // Training loop
+    for epoch := 0; epoch < numEpochs; epoch++ {
+        // Forward pass through each layer
+        inputLayerOutput := inputLayer.Forward(inputData)
+        hiddenLayerOutput := hiddenLayer.Forward(inputLayerOutput)
+        output := outputLayer.Forward(hiddenLayerOutput)
 
-	fmt.Println("Layer Output:", output)
+        // Calculate loss
+        lossValue := loss.CrossEntropy(trueOutput, output)
 
-	yTrue := []float64{2.0, 4.0, 6.0, 8.0}
-	yPred := []float64{1.5, 3.5, 5.5, 7.5}
-
-	mse := loss.MeanSquaredError(yTrue, yPred)
-	fmt.Printf("Mean Squared Error: %f\n", mse)
+        // Backpropagation and optimization steps
+        // ...
+        adam.Update(...) // Update weights and biases
+    }
 }
