@@ -10,7 +10,7 @@ import (
 	"github.com/aaronsatko/gonenet/datahandling"
 )
 
-func main() {
+func man() {
 	// Load and preprocess data
 	data, labels := datahandling.LoadData("path/to/your/data.csv")
 	data = datahandling.Preprocess(data)
@@ -65,3 +65,4 @@ func main() {
 
 	// need to eval model on test data
 }
+
