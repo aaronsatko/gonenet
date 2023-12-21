@@ -62,6 +62,22 @@ func Adam(learningRate, beta1, beta2, epsilon float64, weightShape [][]float64, 
 	}
 }
 
+// Update performs a single optimization step using Adam.
+// It updates the weights and biases of the neural network based on gradients.
+//
+// Usage:
+//   - This method should be called after computing gradients for each batch during training.
+//
+// Arguments:
+//   - weights: A slice of slices containing the current weights of the neural network.
+//   - gradients: A slice of slices containing the gradients of the loss function with respect to each weight.
+//   - biases: A slice containing the current biases of the neural network.
+//   - biasGradients: A slice containing the gradients of the loss function with respect to each bias.
+//
+// Note:
+//   - This method modifies the weights and biases in place, representing a single optimization step.
+//   - It computes bias-corrected first and second moment estimates and uses them to update the parameters.
+
 func (adam *AdamOptimizer) Update(weights, gradients [][]float64, biases, biasGradients []float64) {
 	// Increment the time step
 	adam.T++
