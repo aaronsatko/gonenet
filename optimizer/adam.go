@@ -2,6 +2,24 @@ package optimizer
 
 import "math"
 
+// AdamOptimizer represents the Adam optimization algorithm, which is an extension to stochastic gradient descent.
+// Computes adaptive learning rates for each parameter.
+//
+// Fields:
+//   - LearningRate: Step size used for each iteration of optimization.
+//   - Beta1, Beta2: Exponential decay rates for the moment estimates (typically close to 1).
+//   - Epsilon: A small constant for numerical stability.
+//   - M, V: First (mean) and second (variance) moment vectors for weights.
+//   - MBias, VBias: First and second moment vectors for biases.
+//   - T: Time step (or iteration number), used for bias correction.
+//
+// Usage:
+//   - This optimizer should be used in conjunction with backpropagation to train neural networks.
+//   - Particularly effective for problems with noisy or sparse gradients.
+//
+// Note:
+//   - Adam combines the advantages of two other extensions of stochastic gradient descent: AdaGrad and RMSProp.
+
 type AdamOptimizer struct {
 	LearningRate float64
 	Beta1        float64
