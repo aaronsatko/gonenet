@@ -10,7 +10,7 @@ import (
 	"github.com/aaronsatko/gonenet/datahandling"
 )
 
-func man() {
+func main() {
 	// Load and preprocess data
 	data, labels := datahandling.LoadData("path/to/your/data.csv")
 	data = datahandling.Preprocess(data)
@@ -39,30 +39,35 @@ func man() {
 
 	// Training loop
 	for epoch := 0; epoch < numEpochs; epoch++ {
-		// Create batches
-		batches, _ := datahandling.Batch(trainData, batchSize)
-		labelBatches, _ := datahandling.Batch(trainLabels, batchSize)
+        for i, batch := range batches {
+            inputData := batch
+            trueOutput := labelBatches[i]
 
-		for i, batch := range batches {
-			inputData := batch
-			trueOutput := labelBatches[i]
+            // Forward pass
+            inputLayerOutput := inputLayer.Forward(inputData)
+            hiddenLayerOutput := hiddenLayer.Forward(inputLayerOutput)
+            output := outputLayer.Forward(hiddenLayerOutput)
 
-			// Forward pass through each layer
-			inputLayerOutput := inputLayer.Forward(inputData)
-			hiddenLayerOutput := hiddenLayer.Forward(inputLayerOutput)
-			output := outputLayer.Forward(hiddenLayerOutput)
+            // Calculate loss
+            lossValue := loss.CrossEntropy(trueOutput, output)
 
-			// Calculate loss
-			lossValue := loss.CrossEntropy(trueOutput, output)
+            // Backward pass (compute gradients)
+            outputLayerGradient := loss.Gradient(trueOutput, output)
+            hiddenLayerGradient := outputLayer.Backward(outputLayerGradient)
+            inputLayerGradient := hiddenLayer.Backward(hiddenLayerGradient)
 
-			// implement backprop
+            // Update weights and biases
+            adam.Update(inputLayer.Weights, inputLayerGradient, inputLayer.Biases, [bias gradients])
+            adam.Update(hiddenLayer.Weights, hiddenLayerGradient, hiddenLayer.Biases, [bias gradients])
+            adam.Update(outputLayer.Weights, outputLayerGradient, outputLayer.Biases, [bias gradients])
 
-			adam.Update(...) // Update weights and biases
+            // [Rest of your training loop]
+        }
+    }
 
-			// need to add functions for loss, accuracy
-		}
-	}
+    // [Model evaluation]
+}
 
 	// need to eval model on test data
-}
+
 
