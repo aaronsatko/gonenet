@@ -20,6 +20,10 @@ import "math"
 // Note:
 //   - Adam combines the advantages of two other extensions of stochastic gradient descent: AdaGrad and RMSProp.
 
+type Optimizer interface {
+	Update(weights, gradients [][]float64, biases, biasGradients []float64)
+}
+
 type AdamOptimizer struct {
 	LearningRate float64
 	Beta1        float64
